@@ -7,24 +7,6 @@ access = "" # upbit access key
 secret = "" # upbit secret key
 myToken = "" # slack bot token
 
-try:
-    upbit = pyupbit.Upbit(access, secret)
-    print("login complete")
-except:
-    print("login failed")
-    print("restart please after check your key or token again ")
-
-myKRW_balance = int(upbit.get_balance("KRW")) # 보유 현금 조회
-myCOIN_balance = int(upbit.get_amount("ALL")) # 보유중인 코인 현금 환산 조회
-init_balance = myKRW_balance + myCOIN_balance
-
-def post_message(token, channel, text):
-    """슬랙 메시지 전송"""
-    response = requests.post("https://slack.com/api/chat.postMessage",
-        headers={"Authorization": "Bearer "+token},
-        data={"channel": channel,"text": text}
-    )
-
 def restart():
 
     global init_balance
@@ -42,11 +24,32 @@ def restart():
 
     init_balance = today_bal
 
-# 매일 10시 알림
-schedule.every().day.at("10:00").do(restart)
+def post_message(token, channel, text):
+    """슬랙 메시지 전송"""
+    response = requests.post("https://slack.com/api/chat.postMessage",
+        headers={"Authorization": "Bearer "+token},
+        data={"channel": channel,"text": text}
+    )
 
-while True:
-    schedule.run_pending()
-    time.sleep(1)
+try:
+    upbit = pyupbit.Upbit(access, secret)
+    
+    print("login complete")
+
+    myKRW_balance = int(upbit.get_balance("KRW")) # 보유 현금 조회
+    myCOIN_balance = int(upbit.get_amount("ALL")) # 보유중인 코인 현금 환산 조회
+    init_balance = myKRW_balance + myCOIN_balance
+
+    # 매일 10시 알림
+    schedule.every().day.at("10:00").do(restart)
+
+    while True:
+        schedule.run_pending()
+        time.sleep(1)
+
+except:
+    print("login failed")
+    print("restart please after check your key or token again ")
+
 
 
